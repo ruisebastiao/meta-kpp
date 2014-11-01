@@ -35,12 +35,12 @@ then
   then
     ask_override
     if [ "$yn" == "yes" ]; then	 
-	cp $FILEPATH $tempdest
+	cp -f $FILEPATH $tempdest
     fi 
    
   else
 
-	cp $FILEPATH $tempdest
+	cp -f $FILEPATH $tempdest
    
   fi
 
@@ -95,26 +95,26 @@ do_extractfiles
 bash -c 'echo "musb_am335x" > $DIRDEST/etc/modules'
 
 
-FILENAME="zImage"
-FILEPATH="$IMGLOC/$FILENAME"
-DIRDEST="$BOOT/"
-FILEDEST=""
-do_copyfiles
+#FILENAME="zImage"
+#FILEPATH="$IMGLOC/$FILENAME"
+#DIRDEST="$BOOT/"
+#FILEDEST=""
+#do_copyfiles
 
-FILENAME="zImage-am335x-boneblack.dtb"
-FILEPATH="$IMGLOC/$FILENAME"
-DIRDEST="$BOOT/dtbs/"
-FILEDEST="am335x-boneblack.dtb"
-do_copyfiles
+#FILENAME="zImage-am335x-boneblack.dtb"
+#FILEPATH="$IMGLOC/$FILENAME"
+#DIRDEST="$BOOT/dtbs/"
+#FILEDEST="am335x-boneblack.dtb"
+#do_copyfiles
 
 
-FILENAME="uEnv.txt"
-FILEPATH="$FILENAME"
-DIRDEST="$BOOT/"
+#FILENAME="uEnv.txt"
+#FILEPATH="$FILENAME"
+#DIRDEST="$BOOT/"
 
-echo "Copy $FILENAME ..."
+#echo "Copy $FILENAME ..."
 
-cp $FILEPATH $DIRDEST
+#cp $FILEPATH $DIRDEST
 
 sync
 
