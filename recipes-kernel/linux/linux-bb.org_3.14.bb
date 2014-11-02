@@ -35,10 +35,10 @@ COMPATIBLE_MACHINE = "beaglebone"
 
 S = "${WORKDIR}/git"
 
-BRANCH = "3.14"
+BRANCH = "3.14.22-ti-r33"
 
-# Corresponds to tag 3.14.22-ti-32
-SRCREV = "3f4ea1d4aa026db33db4c1498f778b2a3c646e40"
+# Corresponds to tag 3.14.22-ti-33
+SRCREV = "1c3097fb9db07c49d4a497729c61ed4947ecad00"
 PV = "3.14.22"
 
 # Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
@@ -46,7 +46,9 @@ MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
 PR = "${MACHINE_KERNEL_PR}"
 
 
-SRC_URI = "git:///home/automacao/yocto/beagleboard-linux;protocol=file;nobranch=1 \
+KERNEL_GIT_URI = "git:///home/rui/poky/beagleboard-linux"
+
+SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \
            file://defconfig \
           "
 

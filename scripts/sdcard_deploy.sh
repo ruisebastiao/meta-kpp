@@ -1,4 +1,5 @@
-#! /bin/sh
+#! /bin/bash
+
 
 function ask_override(){
 while true; do
