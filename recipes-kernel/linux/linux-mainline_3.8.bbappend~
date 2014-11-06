@@ -1,0 +1,20 @@
+COMPATIBLE_MACHINE = "beaglebone"
+FILESEXTRAPATHS_prepend := "${THISDIR}/linux-mainline-3.8:"
+BRANCH = "3.8.13-bone67"
+
+# Corresponds to tag 3.8.13
+SRCREV = "82e286cb42ac15b107b4c4613c7eee8da27030a7"
+PV = "3.8.13"
+
+# Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
+MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
+PR = "${MACHINE_KERNEL_PR}"
+
+
+
+KERNEL_GIT_URI = "git:///home/automacao/yocto/beagleboard-linux"
+
+SRC_URI += "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \           
+	   file://defconfig \
+          "
+
