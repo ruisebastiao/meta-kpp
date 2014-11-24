@@ -39,7 +39,7 @@ S = "${WORKDIR}/git"
 BRANCH = "3.14.22-ti-r33"
 
 # Corresponds to tag 3.14.22-ti-33
-SRCREV = "e2eaa0b59499ed35d5e0753c2c566742c2e5cec0"
+SRCREV = "ed0df2e4ce8c621b8454e06372ae55e68c47ac41"
 PV = "3.14.22"
 
 # Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
@@ -47,7 +47,6 @@ MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
 PR = "${MACHINE_KERNEL_PR}"
 
 
-#KERNEL_GIT_URI = "git:///home/rui/poky/beagleboard-linux"
 KERNEL_GIT_URI = "git:///home/automacao/yocto/beagleboard-linux"
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \
