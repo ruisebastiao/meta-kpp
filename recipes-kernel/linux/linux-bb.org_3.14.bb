@@ -25,7 +25,7 @@ RDEPENDS_kernel-base += "am33x-cm3"
 
 # Default is to package all dtb files for ti33x devices unless building
 # for the specific beaglebone machine.
-KERNEL_DEVICETREE_beaglebone = "am335x-bone.dtb am335x-boneblack.dtb"
+KERNEL_DEVICETREE_beaglebone = "am335x-bone.dtb am335x-boneblack.dtb am335x-boneblack-bb-view-43.dtb"
 
 KERNEL_EXTRA_ARGS += "LOADADDR=${UBOOT_ENTRYPOINT}"
 
@@ -36,11 +36,11 @@ COMPATIBLE_MACHINE = "ti33x|ti43x|omap-a15|omap3|beaglebone"
 
 S = "${WORKDIR}/git"
 
-BRANCH = "3.14.22-ti-r33"
+BRANCH = "3.14"
 
-# Corresponds to tag 3.14.22-ti-33
-SRCREV = "268d01be3518889a8efd62bd0685c6424aa3866a"
-PV = "3.14.22"
+# Corresponds to tag 3.14.25-ti-r37
+SRCREV = "db3c339cd606760879c6922e561739ba4756cdcb"
+PV = "3.14.25"
 
 # Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
 MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
@@ -48,6 +48,7 @@ PR = "${MACHINE_KERNEL_PR}"
 
 
 KERNEL_GIT_URI = "git:///home/automacao/yocto/beagleboard-linux"
+
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \
            file://defconfig \
