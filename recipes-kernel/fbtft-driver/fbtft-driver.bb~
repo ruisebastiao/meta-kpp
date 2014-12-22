@@ -9,7 +9,7 @@ PR = "r0"
 
 COMPATIBLE_MACHINE = "raspberrypi"
 
-SRCREV = "76352b8f54652ecce70dfa3415b2de73ed9aa2bd"
+SRCREV = "71994224c5ed951eab7ca9da2c919456d1632d15"
 SRC_URI = "git://github.com/notro/fbtft.git;protocol=http \
 	   file://dma_disable.patch \
 	   file://cansleep.patch"
