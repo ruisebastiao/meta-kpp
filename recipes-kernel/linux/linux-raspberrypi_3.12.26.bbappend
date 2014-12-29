@@ -1,14 +1,29 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/linux-raspberrypi:"
 
-BRANCH = "rpi-3.18.y"
 
-SRCREV = "ba25740fc3418f25099abc0c3049fb3101a27367"
+inherit kernel
+require recipes-kernel/linux/setup-defconfig.inc
 
-KERNEL_GIT_URI = "git:///home/automacao/yocto/linux-rpi"
+#require recipes-kernel/linux/linux-dtb.inc
+
+
+MACHINE_EXTRA_RRECOMMENDS = "kernel-modules"
+
+#KERNEL_DEVICETREE_raspberrypi="bcm2708-rpi-b.dtb "
+
+BRANCH = "rpi-3.14.y"
+
+SRCREV = "efa58ca2948bcfeb0db62e3ba863490b37ae25fd"
+
+KERNEL_GIT_URI = "git://~/linux-rpi"
+
+do_configure_prepend() {
+}
 
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \
-	    file://defconfig \
+	   file://defconfig \
+	   file://addfbtft.patch \
           "
 
 
