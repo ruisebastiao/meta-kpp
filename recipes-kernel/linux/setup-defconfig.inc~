@@ -1,7 +1,7 @@
 # KERNEL_LOCALVERSION can be set to add a tag to the end of the
 # kernel version string.  such as the commit id
 KERNEL_LOCALVERSION ?= ""
-
+COMPATIBLE_MACHINE = "raspberrypi"
 # Check the defconfig file and see if it points to an in kernel
 # defconfig that should be used, or if it is a complete config file
 
@@ -11,11 +11,15 @@ KERNEL_LOCALVERSION ?= ""
 #      and run make $config
 #   3. else run yes '' | oe_runmake oldconfig like the default do_configure
 #      does
+
+
 do_configure() {
+
+
     # Always copy the defconfig file to .config to keep consistency
     # between the case where there is a real config and the in kernel
     # tree config
-    cp ${WORKDIR}/defconfig ${S}/.config
+    cp ${WORKDIR}/defconfig-rpi ${S}/.config
 
     echo ${KERNEL_LOCALVERSION} > ${B}/.scmversion
     echo ${KERNEL_LOCALVERSION} > ${S}/.scmversion

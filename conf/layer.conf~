@@ -5,7 +5,7 @@ BBPATH .= ":${LAYERDIR}"
 BBFILES += "${LAYERDIR}/recipes*/*/*.bb ${LAYERDIR}/recipes*/*/*.bbappend"
 
 BBFILE_COLLECTIONS += "meta-kpp"
-BBFILE_PATTERN_meta-kpp := "${LAYERDIR}/"
-BBFILE_PRIORITY_meta-kpp = "1"
+BBFILE_PATTERN_meta-kpp := "^${LAYERDIR}/"
+BBFILE_PRIORITY_meta-kpp = "7"
 
 LICENSE_PATH += "${LAYERDIR}/licenses"
