@@ -9,4 +9,4 @@ BBFILE_COLLECTIONS += "kpp-rpi"
 BBFILE_PATTERN_kpp-rpi = "^${LAYERDIR}/"
 BBFILE_PRIORITY_kpp-rpi = "6"
 
-LAYERDEPENDS_kpp-rpi = "kpp raspberrypi"
+LAYERDEPENDS_kpp-rpi = "meta-kpp raspberrypi"
