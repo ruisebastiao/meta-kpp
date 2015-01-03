@@ -1,0 +1,13 @@
+DESCRIPTION = "Image base Packagegroup"
+LICENSE = "CLOSED"
+
+inherit packagegroup
+
+RDEPENDS_${PN} = "\
+    omxplayer \
+    bcm2835-tests \
+    wiringpi \
+    rpio \
+    rpi-gpio \
+"
+

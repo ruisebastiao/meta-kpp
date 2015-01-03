@@ -1,10 +1,14 @@
-SUMMARY = "A Qt5 image"
-
+DESCRIPTION = "Qt5 Packagegroup"
 LICENSE = "CLOSED"
 
-include rpi-basic-image.bb
+inherit packagegroup
 
-IMAGE_INSTALL_append = " \
+ 
+PACKAGES = "\
+         packagegroup-qt5-full \
+    "
+
+RDEPENDS_packagegroup-qt5-full = "\
     qtbase \
     qtbase-tools \
     qtbase-plugins \
@@ -51,5 +55,5 @@ IMAGE_INSTALL_append = " \
     qtxmlpatterns \
     qtxmlpatterns-tools \
     qtquickcontrols-qmlplugins \
-    " 
+    "
 

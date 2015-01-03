@@ -1,11 +1,11 @@
 # We have a conf and classes directory, append to BBPATH
 BBPATH .= ":${LAYERDIR}"
-
-# We have a recipes directory, add to BBFILES
-BBFILES += "${LAYERDIR}/recipes*/*/*.bb ${LAYERDIR}/recipes*/*/*.bbappend"
+r
+BBFILES += "${LAYERDIR}/recipes-*/*/*.bb \
+		${LAYERDIR}/recipes-*/*/*.bbappend"
 
 BBFILE_COLLECTIONS += "meta-kpp"
 BBFILE_PATTERN_meta-kpp := "^${LAYERDIR}/"
-BBFILE_PRIORITY_meta-kpp = "7"
+BBFILE_PRIORITY_meta-kpp = "5"
 
 LICENSE_PATH += "${LAYERDIR}/licenses"
