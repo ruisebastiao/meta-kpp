@@ -3,6 +3,8 @@ DESCRIPTION = ""
 
 LICENSE = "CLOSED"
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+
 DEPENDS = "qtbase qtserialport qtwebsockets"
 
 SRCREV = "${AUTOREV}"
@@ -16,6 +18,7 @@ KERNEL_GIT_PROTOCOL="file"
 #KERNEL_GIT_PROTOCOL="git"
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=${KERNEL_GIT_PROTOCOL};branch=${BRANCH} \
+	file://kppbsvalidation-init.sh \
 	"
 
 S = "${WORKDIR}/git"
@@ -30,9 +33,12 @@ datadir="/home/root"
 #FILES_${PN}-dbg += "${datadir}/${P}/.debug"
 FILES_${PN} += "${datadir}"
 
+do_install_append(){
+	install -d ${D}${sysconfdir}/init.d
+	install -m 0755 ${WORKDIR}/kppbsvalidation-init.sh  ${D}${sysconfdir}/init.d/kppbsvalidation-init.sh
+}
+
 inherit update-rc.d
-
-INITSCRIPT_NAME = "bsvalidation_boot"
-INITSCRIPT_PARAMS = "defaults 10"
-
+INITSCRIPT_NAME = "kppbsvalidation-init.sh"
+INITSCRIPT_PARAMS = "start S . stop 20 0 1 6 ."
 
