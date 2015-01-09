@@ -3,7 +3,7 @@ PACKAGECONFIG_X11 = ""
 PACKAGECONFIG_GL = ""
 
 PACKAGECONFIG_append =  " dbus evdev widgets tools libs linuxfb gles2 \
-                        examples teststools accessibility tslib"
+                        examples teststools accessibility tslib -no-xcb -qpa linuxfb"
 
 
 # Workarounds for getting EGL and GLES2

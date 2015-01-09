@@ -18,6 +18,7 @@ for x in $CMDLINE; do
 done
 
 export TMPDIR=/mnt/.psplash
+
 export FBDEV=/dev/fb1
 
 mount tmpfs -t tmpfs $TMPDIR -o,size=40k

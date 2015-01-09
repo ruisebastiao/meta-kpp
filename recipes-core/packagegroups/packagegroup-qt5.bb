@@ -53,7 +53,6 @@ RDEPENDS_packagegroup-qt5-full = "\
     qtwebsockets \
     qtwebsockets-qmlplugins \
     qtxmlpatterns \
-    qtxmlpatterns-tools \
-    qtquickcontrols-qmlplugins \
+    qtxmlpatterns-tools \    
     "
 

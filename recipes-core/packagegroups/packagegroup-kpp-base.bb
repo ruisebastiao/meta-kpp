@@ -10,11 +10,12 @@ PACKAGES = "\
 
 RDEPENDS_packagegroup-kpp-base = "\
  gcc g++ binutils libgcc libgcc-dev libstdc++ \
-libstdc++-dev libstdc++-staticdev \
+libstdc++-dev libstdc++-staticdev libexif \
 autoconf automake ccache chkconfig glib-networking \
 packagegroup-core-buildessential pkgconfig  \
 boost cmake zlib glib-2.0 git \
     gdb \
+    gdbserver \
     nano \
     gstreamer \
     gst-meta-video \
@@ -27,10 +28,9 @@ boost cmake zlib glib-2.0 git \
     gst-plugins-good-rtp \
     gst-plugins-good-video4linux2 \
     openssh-sftp-server \
-    cairo pango fontconfig freetype pulseaudio dbus \
-    alsa-lib alsa-tools alsa-state alsa-utils-alsaconf \
+    cairo pango fontconfig freetype dbus \
     i2c-tools dtc coreutils \
-    connman wireless-tools wpa-supplicant bluez4 mono opkg \
+    connman wireless-tools wpa-supplicant bluez4 opkg \
     tslib-conf tslib-tests tslib-calibrate tslib \
     "
 

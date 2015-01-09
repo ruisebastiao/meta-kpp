@@ -5,20 +5,24 @@ LICENSE = "CLOSED"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
+PR = "r03"
+
 DEPENDS = "qtbase qtserialport qtwebsockets"
 
 SRCREV = "${AUTOREV}"
 
 BRANCH="master"
 
-KERNEL_GIT_URI = "git:///home/rui/KPPBSValidation"
-KERNEL_GIT_PROTOCOL="file"
+#KERNEL_GIT_URI = "git:///home/rui/KPPBSValidation"
+#KERNEL_GIT_PROTOCOL="file"
 
-#KERNEL_GIT_URI = "git://github.com/ruisebastiao/KPPBSValidation.git"
-#KERNEL_GIT_PROTOCOL="git"
+KERNEL_GIT_URI = "git://github.com/ruisebastiao/KPPBSValidation.git"
+KERNEL_GIT_PROTOCOL="git"
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=${KERNEL_GIT_PROTOCOL};branch=${BRANCH} \
 	file://kppbsvalidation-init.sh \
+	file://modules \
+	file://fbtft.conf \
 	"
 
 S = "${WORKDIR}/git"
@@ -36,9 +40,12 @@ FILES_${PN} += "${datadir}"
 do_install_append(){
 	install -d ${D}${sysconfdir}/init.d
 	install -m 0755 ${WORKDIR}/kppbsvalidation-init.sh  ${D}${sysconfdir}/init.d/kppbsvalidation-init.sh
+	install -m 0755 ${WORKDIR}/modules  ${D}${sysconfdir}/modules
+	install -d ${D}${sysconfdir}/modprobe.d
+	install -m 0755 ${WORKDIR}/fbtft.conf  ${D}${sysconfdir}/modprobe.d/fbtft.conf
 }
 
 inherit update-rc.d
 INITSCRIPT_NAME = "kppbsvalidation-init.sh"
-INITSCRIPT_PARAMS = "start S . stop 20 0 1 6 ."
+INITSCRIPT_PARAMS = "start 99 4 5 . stop 99 0 1 6 ."
 

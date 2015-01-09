@@ -1,21 +1,48 @@
 #! /bin/sh
-# /etc/init.d/blah
+# /etc/init.d/kppbsvalidation-init.sh
 #
-
-# Some things that run always
-touch /var/lock/blah
+set -e
 
 # Carry out specific functions when asked to by the system
 case "$1" in
   start)
-    echo "Starting KPP BS Validation "
-    export TSLIB_TSDEVICE=/dev/input/touchscreen0
-    export TSLIB_TSEVENTTYPE=INPUT
-    export TSLIB_CONFFILE=/etc/ts.conf
-    export TSLIB_CALIBFILE=/etc/pointercal
-    export TSLIB_FBDEVICE=/dev/fb1
+    if [ "$(pidof KPPBSValidation)" ]
+    then
+      echo "KPP BS Validation is running"
+    else
+      echo "Starting KPP BS Validation "
+      export TSLIB_TSDEVICE=/dev/input/event0
+      export TSLIB_CONFFILE=/etc/ts.conf
+      CALIBFILE=/etc/pointercal
+      export TSLIB_CALIBFILE=$CALIBFILE
+      export TSLIB_FBDEVICE=/dev/fb1
 
-    /home/root/KPPBSValidation/KPPBSValidation -platform linuxfb:fb=/dev/fb1 -plugin tslib &
+      fb_dev=/dev/fb1
+
+      COUNTER=0
+      while [  $COUNTER -lt 15 ]; do
+
+      if [ -f $fb_dev ];
+      then
+        break;
+      fi
+      sleep 1
+      let COUNTER=COUNTER+1
+     done
+
+
+      if [ -f $CALIBFILE ];
+      then
+         :
+      else
+        echo "Calibration file not found ($CALIBFILE)... Executing calibration"
+        ts_calibrate
+     fi
+
+      /home/root/KPPBSValidation/KPPBSValidation -platform linuxfb:fb=/dev/fb1 -plugin tslib &
+    fi
+
+
 
     ;;
   stop)
@@ -29,5 +56,4 @@ case "$1" in
 esac
 
 exit 0
-
 
