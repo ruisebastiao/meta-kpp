@@ -2,6 +2,8 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/linux-raspberrypi:"
 
 inherit kernel
 
+COMPATIBLE_MACHINE = "raspberrypi"
+
 require recipes-kernel/linux/setup-defconfig.inc
 
 # CMDLINE for raspberrypi

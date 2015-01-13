@@ -20,9 +20,7 @@ KERNEL_GIT_URI = "git://github.com/ruisebastiao/KPPBSValidation.git"
 KERNEL_GIT_PROTOCOL="git"
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=${KERNEL_GIT_PROTOCOL};branch=${BRANCH} \
-	file://kppbsvalidation-init.sh \
-	file://modules \
-	file://fbtft.conf \
+	file://kppbsvalidation-init.sh \	
 	"
 
 S = "${WORKDIR}/git"
@@ -40,9 +38,7 @@ FILES_${PN} += "${datadir}"
 do_install_append(){
 	install -d ${D}${sysconfdir}/init.d
 	install -m 0755 ${WORKDIR}/kppbsvalidation-init.sh  ${D}${sysconfdir}/init.d/kppbsvalidation-init.sh
-	install -m 0755 ${WORKDIR}/modules  ${D}${sysconfdir}/modules
-	install -d ${D}${sysconfdir}/modprobe.d
-	install -m 0755 ${WORKDIR}/fbtft.conf  ${D}${sysconfdir}/modprobe.d/fbtft.conf
+	
 }
 
 inherit update-rc.d

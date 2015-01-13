@@ -1,0 +1,25 @@
+OpenEmbedded/Yocto layer for Beaglebone Black developed by
+Embarcados.com.br
+================================================================
+
+
+This layer provides support for Beaglebone Black and it's used
+by meta-embarcados
+
+
+
+This layer depends on:
+
+
+URI: git://git.yoctoproject.org/meta-ti
+
+branch: daisy
+
+revision: HEAD
+
+
+URI: https://bitbucket.org/embarcados/meta-embarcados.git
+
+branch: daisy
+
+revision: HEAD
