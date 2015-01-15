@@ -87,7 +87,7 @@ FILEDEST=""
 do_copyfiles
 
 
-FILENAME="core-image-sato-beaglebone.tar.gz"
+FILENAME="kpp-image-qt5-beaglebone.tar.gz"
 FILEPATH="$IMGLOC/$FILENAME"
 DIRDEST="$ROOTFS/"
 FILEDEST=""
