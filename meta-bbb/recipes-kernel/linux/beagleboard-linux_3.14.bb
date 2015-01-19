@@ -14,7 +14,7 @@ INHIBIT_PACKAGE_STRIP = "1"
 LINUX_KERNEL_TYPE = "beagleboard.org"
 LINUX_VERSION_EXTENSION = "-${LINUX_KERNEL_TYPE}"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/linux-bb.org-3.14:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/beagleboard-linux-3.14:"
 
 # Pull in the devicetree files into the rootfs
 RDEPENDS_kernel-base += "kernel-devicetree"
@@ -39,7 +39,7 @@ S = "${WORKDIR}/git"
 BRANCH = "3.14"
 
 # Corresponds to tag 3.14.25-ti-r37
-SRCREV = "db3c339cd606760879c6922e561739ba4756cdcb"
+SRCREV = "0e84400fc36a2cfe737546201b86e0e312825968"
 PV = "3.14.25"
 
 # Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
@@ -47,10 +47,11 @@ MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
 PR = "${MACHINE_KERNEL_PR}"
 
 
-KERNEL_GIT_URI = "git:///home/automacao/yocto/beagleboard-linux"
+KERNEL_GIT_URI = "git://${HOME}/beagleboard-linux/"
 
 
-SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \
-           file://defconfig \
+SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \	   
+	    file://0007-fixBGR.patch \	   	    
+	    file://defconfig \	    
           "
 

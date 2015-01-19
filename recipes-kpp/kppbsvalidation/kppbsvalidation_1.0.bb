@@ -5,7 +5,7 @@ LICENSE = "CLOSED"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-PR = "r03"
+PR = "r07"
 
 DEPENDS = "qtbase qtserialport qtwebsockets"
 
@@ -27,6 +27,7 @@ S = "${WORKDIR}/git"
 
 inherit qmake5
 
+FBDEV="/dev/fb0"
 
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
@@ -36,8 +37,11 @@ datadir="/home/root"
 FILES_${PN} += "${datadir}"
 
 do_install_append(){
+        FBDEVPARSED=$(echo ${FBDEV} | sed 's./.\\/.g')        
+        sed 's/fb_dev=\/dev\/fb./fb_dev='$FBDEVPARSED' /' ${WORKDIR}/kppbsvalidation-init.sh > ${WORKDIR}/kppbsvalidation-init2.sh	
+	cat ${WORKDIR}/kppbsvalidation-init2.sh
 	install -d ${D}${sysconfdir}/init.d
-	install -m 0755 ${WORKDIR}/kppbsvalidation-init.sh  ${D}${sysconfdir}/init.d/kppbsvalidation-init.sh
+	install -m 0755 ${WORKDIR}/kppbsvalidation-init2.sh  ${D}${sysconfdir}/init.d/kppbsvalidation-init.sh
 	
 }
 

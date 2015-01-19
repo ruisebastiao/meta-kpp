@@ -9,27 +9,37 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/linux-ti-staging-3.%:"
 # for the specific beaglebone machine.
 KERNEL_DEVICETREE_beaglebone += " am335x-boneblack-bb-view-43.dtb"
 
+MACHINE_EXTRA_RRECOMMENDS += " kernel-modules"
 
 COMPATIBLE_MACHINE = "ti33x|ti43x|omap-a15|omap3|beaglebone"
 
 
 #S = "${WORKDIR}/git"
 
-BRANCH = "ti-linux-3.14.y"
+BRANCH = "3.14"
 
+#SRCREV = "7828f3b4cb26fa9c978aa96cc46cca8521957f24"
 SRCREV = "${AUTOREV}"
-PV = "3.14.26"
+
+#PV = "3.14.26"
 
 RV = "04"
 
 #Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
-MACHINE_KERNEL_PR = "r${RV}-"
+#MACHINE_KERNEL_PR = "r${RV}-"
 
 
 
-KERNEL_GIT_URI = "git://${HOME}/linux-ti/"
+KERNEL_GIT_URI = "git://${HOME}/beagleboard-linux/"
 KERNEL_GIT_PROTOCOL = "file"
-           
-SRC_URI += "\
-	  file://0007-add_bbview_devicetree.patch \
+
+#KERNEL_GIT_URI = "git://RobertCNelson/ti-linux-kernel.git"
+#KERNEL_GIT_PROTOCOL = "git"
+     
+SRC_URI = "${KERNEL_GIT_URI};protocol=${KERNEL_GIT_PROTOCOL};branch=${BRANCH} \
+            file://defconfig \
            "
+           
+#SRC_URI += "
+#	  file://0007-add_bbview_devicetree.patch 
+#           "

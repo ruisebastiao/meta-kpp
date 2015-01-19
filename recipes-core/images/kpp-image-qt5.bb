@@ -10,6 +10,7 @@ include recipes-core/images/core-image-minimal.bb
 IMAGE_INSTALL += "\
 		packagegroup-kpp-base \
 		packagegroup-qt5-full \
+		packagegroup-qt5-machine-related \
 		kernel-modules \
 		"
 SPLASH = "psplash-kpp"

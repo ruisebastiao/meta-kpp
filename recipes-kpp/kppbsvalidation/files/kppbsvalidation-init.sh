@@ -11,18 +11,21 @@ case "$1" in
       echo "KPP BS Validation is running"
     else
       echo "Starting KPP BS Validation "
+      
+      fb_dev=/dev/fbx
+      
       export TSLIB_TSDEVICE=/dev/input/event0
       export TSLIB_CONFFILE=/etc/ts.conf
       CALIBFILE=/etc/pointercal
       export TSLIB_CALIBFILE=$CALIBFILE
-      export TSLIB_FBDEVICE=/dev/fb1
+      export TSLIB_FBDEVICE=$fb_dev
 
-      fb_dev=/dev/fb1
+      
 
       COUNTER=0
       while [  $COUNTER -lt 15 ]; do
 
-      if [ -f $fb_dev ];
+      if [ -e $fb_dev ];
       then
         break;
       fi
@@ -39,7 +42,7 @@ case "$1" in
         ts_calibrate
      fi
 
-      /home/root/KPPBSValidation/KPPBSValidation -platform linuxfb:fb=/dev/fb1 -plugin tslib &
+      /home/root/KPPBSValidation/KPPBSValidation -platform linuxfb:fb=$fb_dev -plugin tslib &
     fi
 
 
