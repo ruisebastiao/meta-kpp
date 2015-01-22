@@ -56,3 +56,4 @@ RDEPENDS_packagegroup-qt5-full = "\
     qtxmlpatterns-tools \    
     "
 
+DISTRO_FEATURES_remove = "x11 wayland"

@@ -1,0 +1,146 @@
+From 511d92b849eb5e5d1eeb9805e68ea443b1bba34f Mon Sep 17 00:00:00 2001
+From: ruisebastiao <ruisebastiao@gmail.com>
+Date: Tue, 20 Jan 2015 12:19:44 +0000
+Subject: [PATCH]  fix touchscreen jitter revision 1.0
+
+---
+ drivers/iio/adc/ti_am335x_adc.c           |  4 +--
+ drivers/input/touchscreen/ti_am335x_tsc.c | 58 ++++++++++++++++++++++++++-----
+ 2 files changed, 51 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/iio/adc/ti_am335x_adc.c b/drivers/iio/adc/ti_am335x_adc.c
+index aa146cb..86a01ed 100644
+--- a/drivers/iio/adc/ti_am335x_adc.c
++++ b/drivers/iio/adc/ti_am335x_adc.c
+@@ -87,7 +87,7 @@ static void tiadc_step_config(struct iio_dev *indio_dev)
+ {
+ 	struct tiadc_device *adc_dev = iio_priv(indio_dev);
+ 	unsigned int stepconfig;
+-	int i, steps;
++	int i, steps = 0;
+ 
+ 	/*
+ 	 * There are 16 configurable steps and 8 analog input
+@@ -99,7 +99,7 @@ static void tiadc_step_config(struct iio_dev *indio_dev)
+ 	 * needs to be given to ADC to digitalize data.
+ 	 */
+ 
+-	steps = 0;
++	steps = TOTAL_STEPS - adc_dev->channels;
+ 	if (iio_buffer_enabled(indio_dev))
+ 		stepconfig = STEPCONFIG_AVG_16 | STEPCONFIG_FIFO1
+ 					| STEPCONFIG_MODE_SWCNT;
+diff --git a/drivers/input/touchscreen/ti_am335x_tsc.c b/drivers/input/touchscreen/ti_am335x_tsc.c
+index 23198a2..721cd19 100644
+--- a/drivers/input/touchscreen/ti_am335x_tsc.c
++++ b/drivers/input/touchscreen/ti_am335x_tsc.c
+@@ -52,6 +52,10 @@ struct titsc {
+ 	u32			bit_xp, bit_xn, bit_yp, bit_yn;
+ 	u32			inp_xp, inp_xn, inp_yp, inp_yn;
+ 	u32			step_mask;
++#define	TOUCH_TYPE_LCD_NORM	0
++#define	TOUCH_TYPE_LCD43	1
++#define	TOUCH_TYPE_LCD7		2
++	int			touch_type;
+ };
+ 
+ static unsigned int titsc_readl(struct titsc *ts, unsigned int reg)
+@@ -59,6 +63,20 @@ static unsigned int titsc_readl(struct titsc *ts, unsigned int reg)
+ 	return readl(ts->mfd_tscadc->tscadc_base + reg);
+ }
+ 
++
++static u32 reg_read(unsigned addr) { return readl((const volatile void*)addr); }
++static int dump_regs(char* name, unsigned addr, int size) {
++	int i;
++	u32 reg;
++
++	for (i = 0; i < size; i += sizeof(int)) {
++		reg = reg_read(addr + i);
++		printk("%s[%.4X] = 0x%.8X\n", name, i, reg);
++	}
++	return 0;
++}
++
++
+ static void titsc_writel(struct titsc *tsc, unsigned int reg,
+ 					unsigned int val)
+ {
+@@ -128,7 +146,9 @@ static void titsc_step_config(struct titsc *ts_dev)
+ 			STEPCONFIG_AVG_16 | ts_dev->bit_xp;
+ 	switch (ts_dev->wires) {
+ 	case 4:
+-		config |= STEPCONFIG_INP(ts_dev->inp_yp) | ts_dev->bit_xn;
++		config = ts_dev->bit_xp | ts_dev->bit_yn |
++ 			STEPCHARGE_RFP_XPUL | STEPCHARGE_RFM_XNUR |
++			STEPCHARGE_INM_AN1 | STEPCHARGE_INP(ts_dev->inp_xn);
+ 		break;
+ 	case 5:
+ 		config |= ts_dev->bit_yn |
+@@ -181,9 +201,9 @@ static void titsc_step_config(struct titsc *ts_dev)
+ 
+ 	/* coordinate_readouts + 1 ... coordinate_readouts + 2 is for Z */
+ 	config = STEPCONFIG_MODE_HWSYNC |
+-			STEPCONFIG_AVG_16 | ts_dev->bit_yp |
+-			ts_dev->bit_xn | STEPCONFIG_INM_ADCREFM |
+-			STEPCONFIG_INP(ts_dev->inp_xp);
++			STEPCONFIG_AVG_16 | STEPCONFIG_YPN |
++			STEPCONFIG_XNP | STEPCONFIG_INM_ADCREFM |
++ 			STEPCONFIG_INP(ts_dev->inp_xp);
+ 	titsc_writel(ts_dev, REG_STEPCONFIG(end_step), config);
+ 	titsc_writel(ts_dev, REG_STEPDELAY(end_step),
+ 			STEPCONFIG_OPENDLY);
+@@ -301,11 +321,23 @@ static irqreturn_t titsc_irq(int irq, void *dev)
+ 			z = (z + 2047) >> 12;
+ 
+ 			if (z <= MAX_12BIT) {
+-				input_report_abs(input_dev, ABS_X, x);
+-				input_report_abs(input_dev, ABS_Y, y);
+-				input_report_abs(input_dev, ABS_PRESSURE, z);
+-				input_report_key(input_dev, BTN_TOUCH, 1);
+-				input_sync(input_dev);
++				if (ts_dev->touch_type != TOUCH_TYPE_LCD_NORM) {
++					x &= ~0x0007;
++					y &= ~0x0007;
++				}
++				if (ts_dev->touch_type == TOUCH_TYPE_LCD7) {
++					input_report_abs(input_dev, ABS_X, 4096 - y);
++					input_report_abs(input_dev, ABS_Y, x - 256);
++				} else if (ts_dev->touch_type == TOUCH_TYPE_LCD43) {
++					input_report_abs(input_dev, ABS_X, 4096 - x);
++					input_report_abs(input_dev, ABS_Y, 3840 - y);
++				} else {
++ 				input_report_abs(input_dev, ABS_X, x);
++ 				input_report_abs(input_dev, ABS_Y, y);
++				}
++ 				input_report_abs(input_dev, ABS_PRESSURE, z);
++ 				input_report_key(input_dev, BTN_TOUCH, 1);
++ 				input_sync(input_dev);
+ 			}
+ 		}
+ 		irqclr |= IRQENB_FIFO0THRES;
+@@ -356,6 +388,12 @@ static int titsc_parse_dt(struct platform_device *pdev,
+ 	if (err < 0)
+ 		return err;
+ 
++	err = of_property_read_u32(node, "ti,touch-type", &ts_dev->touch_type);
++	if (err < 0) {
++		ts_dev->touch_type = TOUCH_TYPE_LCD_NORM;
++	}
++
++
+ 	return of_property_read_u32_array(node, "ti,wire-config",
+ 			ts_dev->config_inp, ARRAY_SIZE(ts_dev->config_inp));
+ }
+@@ -449,6 +487,8 @@ static int titsc_remove(struct platform_device *pdev)
+ 
+ 	input_unregister_device(ts_dev->input);
+ 
++	dump_regs("TSC - KPP:", (unsigned)ts_dev->mfd_tscadc->tscadc_base, REG_FIFO0);
++	
+ 	kfree(ts_dev);
+ 	return 0;
+ }
+-- 
+1.9.1
+

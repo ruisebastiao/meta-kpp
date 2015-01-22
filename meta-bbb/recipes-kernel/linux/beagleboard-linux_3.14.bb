@@ -38,20 +38,28 @@ S = "${WORKDIR}/git"
 
 BRANCH = "3.14"
 
-# Corresponds to tag 3.14.25-ti-r37
-SRCREV = "0e84400fc36a2cfe737546201b86e0e312825968"
-PV = "3.14.25"
+# Corresponds to tag  3.14.29-ti-r45
+SRCREV = "0f54ea54966e3ef5d4ca7ec47d36fc3ea29e1ad2"
+PV = "3.14.29"
 
 # Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
 MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
 PR = "${MACHINE_KERNEL_PR}"
 
+do_patch_append(){
+  cp  ${WORKDIR}/am335x-bone-ti-tscadc-4-wire.dtsi ${S}/arch/arm/boot/dts/
+  cp  ${WORKDIR}/am335x-bone-panel-480x272-bgrx_16bpp.dtsi ${S}/arch/arm/boot/dts/  
+}
+
 
 KERNEL_GIT_URI = "git://${HOME}/beagleboard-linux/"
 
 
-SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \	   
-	    file://0007-fixBGR.patch \	   	    
+
+SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \	   	    
+	    file://am335x-bone-ti-tscadc-4-wire.dtsi \
+	    file://am335x-bone-panel-480x272-bgrx_16bpp.dtsi \
 	    file://defconfig \	    
           "
 
+#file://0001-fix_rgb_swap.patch 

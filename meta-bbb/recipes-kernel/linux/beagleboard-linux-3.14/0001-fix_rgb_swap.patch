@@ -1,0 +1,722 @@
+From fe19e42b3138527d9a15606db09dbf67f77508cf Mon Sep 17 00:00:00 2001
+From: ruisebastiao <ruisebastiao@gmail.com>
+Date: Tue, 20 Jan 2015 00:48:14 +0000
+Subject: [PATCH 1/4] fix rgb swap
+
+---
+ .../devicetree/bindings/drm/tilcdc/tilcdc.txt      |   7 +
+ drivers/gpu/drm/tilcdc/Makefile                    |   1 +
+ drivers/gpu/drm/tilcdc/tilcdc_drv.c                |  42 ++-
+ drivers/gpu/drm/tilcdc/tilcdc_drv.h                |  13 +-
+ drivers/gpu/drm/tilcdc/tilcdc_fbdev.c              | 315 +++++++++++++++++++++
+ drivers/gpu/drm/tilcdc/tilcdc_fbdev.h              |  31 ++
+ drivers/video/console/fbcon.c                      |  58 +++-
+ 7 files changed, 439 insertions(+), 28 deletions(-)
+ create mode 100644 drivers/gpu/drm/tilcdc/tilcdc_fbdev.c
+ create mode 100644 drivers/gpu/drm/tilcdc/tilcdc_fbdev.h
+
+diff --git a/Documentation/devicetree/bindings/drm/tilcdc/tilcdc.txt b/Documentation/devicetree/bindings/drm/tilcdc/tilcdc.txt
+index fff10da..e924c3a 100644
+--- a/Documentation/devicetree/bindings/drm/tilcdc/tilcdc.txt
++++ b/Documentation/devicetree/bindings/drm/tilcdc/tilcdc.txt
+@@ -17,6 +17,11 @@ Optional properties:
+    the lcd controller.
+  - max-pixelclock: The maximum pixel clock that can be supported
+    by the lcd controller in KHz.
++ - bgrx_16bpp: Swap blue and red to work around the TI Sitara
++   erratum -- some LCD capes for BeagleBone Black output BGR in
++  16bpp mode so that 24 and 32bpp modes output "correct" color.
++ - bgrx_24bpp: Swap blue and red to work around the TI Sitara
++   erratum (should normally be used)
+ 
+ Example:
+ 
+@@ -26,4 +31,6 @@ Example:
+ 		interrupt-parent = <&intc>;
+ 		interrupts = <36>;
+ 		ti,hwmods = "lcdc";
++		bgrx_24bpp;
++		bgrx_16bpp;		
+ 	};
+diff --git a/drivers/gpu/drm/tilcdc/Makefile b/drivers/gpu/drm/tilcdc/Makefile
+index 7d2eefe..32a1719 100644
+--- a/drivers/gpu/drm/tilcdc/Makefile
++++ b/drivers/gpu/drm/tilcdc/Makefile
+@@ -8,6 +8,7 @@ tilcdc-y := \
+ 	tilcdc_tfp410.o \
+ 	tilcdc_slave.o \
+ 	tilcdc_panel.o \
++	tilcdc_fbdev.o \
+ 	tilcdc_drv.o
+ 
+ obj-$(CONFIG_DRM_TILCDC)	+= tilcdc.o
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_drv.c b/drivers/gpu/drm/tilcdc/tilcdc_drv.c
+index 4178f0f..3161a17 100644
+--- a/drivers/gpu/drm/tilcdc/tilcdc_drv.c
++++ b/drivers/gpu/drm/tilcdc/tilcdc_drv.c
+@@ -24,6 +24,7 @@
+ #include "tilcdc_tfp410.h"
+ #include "tilcdc_slave.h"
+ #include "tilcdc_panel.h"
++#include "tilcdc_fbdev.h"
+ 
+ #include "drm_fb_helper.h"
+ 
+@@ -60,8 +61,10 @@ static struct drm_framebuffer *tilcdc_fb_create(struct drm_device *dev,
+ static void tilcdc_fb_output_poll_changed(struct drm_device *dev)
+ {
+ 	struct tilcdc_drm_private *priv = dev->dev_private;
+-	if (priv->fbdev)
+-		drm_fbdev_cma_hotplug_event(priv->fbdev);
++	if (priv->fbdev) {
++	        struct drm_fbdev_cma *fbdev_cma = (struct drm_fbdev_cma *) priv->fbdev;
++		drm_fbdev_cma_hotplug_event(fbdev_cma);
++	}
+ }
+ 
+ static const struct drm_mode_config_funcs mode_config_funcs = {
+@@ -166,10 +169,11 @@ static int tilcdc_load(struct drm_device *dev, unsigned long flags)
+ {
+ 	struct platform_device *pdev = dev->platformdev;
+ 	struct device_node *node = pdev->dev.of_node;
++	struct device_node *panel_info_node;	
+ 	struct tilcdc_drm_private *priv;
+ 	struct tilcdc_module *mod;
+ 	struct resource *res;
+-	u32 bpp = 0;
++	uint32_t preferred_bpp;
+ 	int ret;
+ 
+ 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+@@ -234,8 +238,27 @@ static int tilcdc_load(struct drm_device *dev, unsigned long flags)
+ 
+ 	DBG("Maximum Pixel Clock Value %dKHz", priv->max_pixelclock);
+ 
++	
++	priv->bgrx_16bpp_swap = of_property_read_bool(node, "bgrx_16bpp");
++
++	DBG("Enable 16bpp BGRx swap: %s",
++	                priv->bgrx_16bpp_swap ? "true" : "false");
++
++	priv->bgrx_24bpp_swap = of_property_read_bool(node, "bgrx_24bpp");
++
++	DBG("Enable 24bpp BGRx swap: %s",
++	                priv->bgrx_24bpp_swap ? "true" : "false");
++
+ 	pm_runtime_enable(dev->dev);
+ 
++	/* Query the preferred BPP from the DTS' panel-info/bpp property */
++	panel_info_node = of_find_node_by_path("/ocp/panel/panel-info");
++	if (!panel_info_node ||
++	    of_property_read_u32(panel_info_node, "bpp", &preferred_bpp))
++	        preferred_bpp = TILCDC_DEFAULT_PREFERRED_BPP;
++
++	DBG("preferred_bpp %d", preferred_bpp);
++	
+ 	/*
+ 	 * disable creation of new console during suspend.
+ 	 * this works around a problem where a ctrl-c is needed
+@@ -286,15 +309,7 @@ static int tilcdc_load(struct drm_device *dev, unsigned long flags)
+ 
+ 	platform_set_drvdata(pdev, dev);
+ 
+-
+-	list_for_each_entry(mod, &module_list, list) {
+-		DBG("%s: preferred_bpp: %d", mod->name, mod->preferred_bpp);
+-		bpp = mod->preferred_bpp;
+-		if (bpp > 0)
+-			break;
+-	}
+-
+-	priv->fbdev = drm_fbdev_cma_init(dev, bpp,
++	priv->fbdev = tilcdc_fbdev_cma_init(dev, preferred_bpp,
+ 			dev->mode_config.num_crtc,
+ 			dev->mode_config.num_connector);
+ 	if (IS_ERR(priv->fbdev)) {
+@@ -350,7 +365,8 @@ static void tilcdc_preclose(struct drm_device *dev, struct drm_file *file)
+ static void tilcdc_lastclose(struct drm_device *dev)
+ {
+ 	struct tilcdc_drm_private *priv = dev->dev_private;
+-	drm_fbdev_cma_restore_mode(priv->fbdev);
++	struct drm_fbdev_cma *fbdev_cma = (struct drm_fbdev_cma *) priv->fbdev;
++	drm_fbdev_cma_restore_mode(fbdev_cma);
+ }
+ 
+ static irqreturn_t tilcdc_irq(int irq, void *arg)
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_drv.h b/drivers/gpu/drm/tilcdc/tilcdc_drv.h
+index e5dd5f3..6a1b936 100644
+--- a/drivers/gpu/drm/tilcdc/tilcdc_drv.h
++++ b/drivers/gpu/drm/tilcdc/tilcdc_drv.h
+@@ -31,6 +31,7 @@
+ 
+ #include <drm/drmP.h>
+ #include <drm/drm_crtc_helper.h>
++#include <drm/drm_fb_helper.h>
+ #include <drm/drm_gem_cma_helper.h>
+ #include <drm/drm_fb_cma_helper.h>
+ 
+@@ -38,6 +39,11 @@
+ #define TILCDC_DEFAULT_MAX_PIXELCLOCK  126000
+ /* Defaulting to max width as defined on AM335x */
+ #define TILCDC_DEFAULT_MAX_WIDTH  2048
++
++/* Default preferred BPP */
++#define TILCDC_DEFAULT_PREFERRED_BPP 16
++
++
+ /*
+  * This may need some tweaking, but want to allow at least 1280x1024@60
+  * with optimized DDR & EMIF settings tweaked 1920x1080@24 appears to
+@@ -49,6 +55,9 @@
+ struct tilcdc_drm_private {
+ 	void __iomem *mmio;
+ 
++        int bgrx_16bpp_swap;	/* 16bpp RBGx-to-BGRx workaround (Beagle LCD capes) */
++        int bgrx_24bpp_swap;    /* 24bpp RGBx-to-BGRx workaround (Beagle LCD capes) */
++
+ 	struct clk *clk;         /* functional clock */
+ 	int rev;                 /* IP revision */
+ 
+@@ -76,7 +85,7 @@ struct tilcdc_drm_private {
+ 
+ 	struct workqueue_struct *wq;
+ 
+-	struct drm_fbdev_cma *fbdev;
++	struct tilcdc_drm_fbdev /* drm_fbdev_cma */ *fbdev;
+ 
+ 	struct drm_crtc *crtc;
+ 
+@@ -85,6 +94,8 @@ struct tilcdc_drm_private {
+ 
+ 	unsigned int num_connectors;
+ 	struct drm_connector *connectors[8];
++	
++	struct drm_fb_helper_funcs *drm_fb_helper_funcs;
+ };
+ 
+ /* Sub-module for display.  Since we don't know at compile time what panels
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_fbdev.c b/drivers/gpu/drm/tilcdc/tilcdc_fbdev.c
+new file mode 100644
+index 0000000..e0c89e9
+--- /dev/null
++++ b/drivers/gpu/drm/tilcdc/tilcdc_fbdev.c
+@@ -0,0 +1,315 @@
++/* tilcdc_fbdev.c
++ *
++ * Copyright (c) 2014 B. Scott Michel
++ * Author: B. Scott Michel (bscottm@ieee.org)
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 as published by
++ * the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ *
++ * You should have received a copy of the GNU General Public License along with
++ * this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++/*
++ * NOTE: This code provides the minimal DRM scaffolding copied from the
++ * drm_fb_cma_helper.c source needed to hook into struct fb_ops.fb_check_var
++ * function pointer.
++ */
++
++#include "tilcdc_drv.h"
++#include "tilcdc_fbdev.h"
++
++/*
++ * These structures were copied from the drm_fb_cma_helper.c source, they
++ * are bitwise equivalent:
++ * 
++ * tilcdc_fb_cma -> drm_fb_cma
++ * tilcdc_drm_fbdev -> drm_fbdev_cma
++ */
++struct tilcdc_fb_cma {
++	struct drm_framebuffer		fb;
++	struct drm_gem_cma_object	*obj[4];
++};
++
++struct tilcdc_drm_fbdev {
++	struct drm_fb_helper	drm_fb_helper;
++	struct tilcdc_fb_cma	*fb;
++};
++
++static inline struct tilcdc_drm_fbdev *to_tilcdc_fbdev(struct drm_fb_helper *helper)
++{
++	return container_of(helper, struct tilcdc_drm_fbdev, drm_fb_helper);
++}
++
++static inline struct tilcdc_fb_cma *to_tilcdc_fb_cma(struct drm_framebuffer *fb)
++{
++	return container_of(fb, struct tilcdc_fb_cma, fb);
++}
++
++static int tilcdc_fbdev_check_var(struct fb_var_screeninfo *var,
++				  struct fb_info *info)
++{
++	int ret, depth;
++	__u32 offs;
++	struct drm_fb_helper *helper = info->par;
++	struct drm_device *dev = helper->dev;
++	struct tilcdc_drm_private *priv = dev->dev_private;
++
++	ret = drm_fb_helper_check_var(var, info);
++	if (ret)
++		return ret;
++
++	/* Calculate current depth, prepare for RGBx->BGRx swap, if requested */
++	switch (var->bits_per_pixel) {
++	case 16:
++		depth = (var->green.length == 6) ? 16 : 15;
++		break;
++	case 32:
++		depth = (var->transp.length > 0) ? 32 : 24;
++		break;
++	default:
++		depth = var->bits_per_pixel;
++		break;
++	}
++
++	DBG("depth: %d", depth);
++
++	if ((depth == 16 && priv->bgrx_16bpp_swap) ||
++	    (depth == 24 && priv->bgrx_24bpp_swap)) {
++		/* RGBx -> BGRx reversal */
++		offs = var->red.offset;
++		var->red.offset = var->blue.offset;
++		var->blue.offset = offs;
++	}
++
++	return 0;
++}
++
++/* framebuffer operations adapted from drm_fb_cma_helper.c */
++static struct fb_ops tilcdc_fb_ops = {
++	.owner		= THIS_MODULE,
++	.fb_fillrect	= sys_fillrect,
++	.fb_copyarea	= sys_copyarea,
++	.fb_imageblit	= sys_imageblit,
++	.fb_check_var	= tilcdc_fbdev_check_var,
++	.fb_set_par	= drm_fb_helper_set_par,
++	.fb_blank	= drm_fb_helper_blank,
++	.fb_pan_display	= drm_fb_helper_pan_display,
++	.fb_setcmap	= drm_fb_helper_setcmap,
++};
++
++static int tilcdc_fb_cma_create_handle(struct drm_framebuffer *fb,
++	struct drm_file *file_priv, unsigned int *handle)
++{
++	struct tilcdc_fb_cma *fb_cma = to_tilcdc_fb_cma(fb);
++
++	return drm_gem_handle_create(file_priv,
++			&fb_cma->obj[0]->base, handle);
++}
++
++static void tilcdc_fb_cma_destroy(struct drm_framebuffer *fb)
++{
++	struct tilcdc_fb_cma *fb_cma = to_tilcdc_fb_cma(fb);
++	int i;
++
++	for (i = 0; i < 4; i++) {
++		if (fb_cma->obj[i])
++			drm_gem_object_unreference_unlocked(&fb_cma->obj[i]->base);
++	}
++
++	drm_framebuffer_cleanup(fb);
++	kfree(fb_cma);
++}
++
++static struct drm_framebuffer_funcs tilcdc_fb_cma_funcs = {
++	.destroy	= tilcdc_fb_cma_destroy,
++	.create_handle	= tilcdc_fb_cma_create_handle,
++};
++
++static struct drm_fb_helper_funcs tilcdc_fb_cma_helper_funcs = {
++	.fb_probe = tilcdc_drm_fbdev_probe,
++};
++
++/* Copied from drm_fb_cma_helper.c */
++static struct tilcdc_fb_cma *tilcdc_fb_cma_alloc(struct drm_device *dev,
++	struct drm_mode_fb_cmd2 *mode_cmd, struct drm_gem_cma_object **obj,
++	unsigned int num_planes)
++{
++	struct tilcdc_fb_cma *fb_cma;
++	int ret;
++	int i;
++
++	DBG("allocating fb_cma");
++
++	fb_cma = kzalloc(sizeof(*fb_cma), GFP_KERNEL);
++	if (!fb_cma)
++		return ERR_PTR(-ENOMEM);
++
++	ret = drm_framebuffer_init(dev, &fb_cma->fb, &tilcdc_fb_cma_funcs);
++	if (ret) {
++		dev_err(dev->dev, "Failed to initalize framebuffer: %d\n", ret);
++		kfree(fb_cma);
++		return ERR_PTR(ret);
++	}
++
++	drm_helper_mode_fill_fb_struct(&fb_cma->fb, mode_cmd);
++
++	for (i = 0; i < num_planes; i++)
++		fb_cma->obj[i] = obj[i];
++
++	return fb_cma;
++}
++
++static int tilcdc_drm_fbdev_create(struct drm_fb_helper *helper,
++				   struct drm_fb_helper_surface_size *sizes)
++{
++	struct tilcdc_drm_fbdev *fbdev_cma = to_tilcdc_fbdev(helper);
++	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
++	struct drm_device *dev = helper->dev;
++	struct drm_gem_cma_object *obj;
++	struct drm_framebuffer *fb;
++	unsigned int bytes_per_pixel;
++	unsigned long offset;
++	struct fb_info *fbi;
++	size_t size;
++	int ret;
++
++	DRM_DEBUG_KMS("surface width(%d), height(%d) and bpp(%d)\n",
++			sizes->surface_width, sizes->surface_height,
++			sizes->surface_bpp);
++
++	bytes_per_pixel = DIV_ROUND_UP(sizes->surface_bpp, 8);
++
++	mode_cmd.width = sizes->surface_width;
++	mode_cmd.height = sizes->surface_height;
++	mode_cmd.pitches[0] = sizes->surface_width * bytes_per_pixel;
++	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
++		sizes->surface_depth);
++
++	size = mode_cmd.pitches[0] * mode_cmd.height;
++	obj = drm_gem_cma_create(dev, size);
++	if (IS_ERR(obj))
++		return -ENOMEM;
++
++	fbi = framebuffer_alloc(0, dev->dev);
++	if (!fbi) {
++		dev_err(dev->dev, "Failed to allocate framebuffer info.\n");
++		ret = -ENOMEM;
++		goto err_drm_gem_cma_free_object;
++	}
++
++	fbi->par = helper;
++	fbi->flags = FBINFO_DEFAULT;
++	fbi->fbops = &tilcdc_fb_ops;
++
++	fbdev_cma->fb = tilcdc_fb_cma_alloc(dev, &mode_cmd, &obj, 1);
++	if (IS_ERR(fbdev_cma->fb)) {
++		dev_err(dev->dev, "Failed to allocate DRM framebuffer.\n");
++		ret = PTR_ERR(fbdev_cma->fb);
++		goto err_framebuffer_release;
++	}
++
++	fb = &fbdev_cma->fb->fb;
++	helper->fb = fb;
++	helper->fbdev = fbi;
++
++	ret = fb_alloc_cmap(&fbi->cmap, 256, 0);
++	if (ret) {
++		dev_err(dev->dev, "Failed to allocate color map.\n");
++		goto err_drm_fb_cma_destroy;
++	}
++
++	drm_fb_helper_fill_fix(fbi, fb->pitches[0], fb->depth);
++	drm_fb_helper_fill_var(fbi, helper, fb->width, fb->height);
++
++	offset = fbi->var.xoffset * bytes_per_pixel;
++	offset += fbi->var.yoffset * fb->pitches[0];
++
++	dev->mode_config.fb_base = (resource_size_t)obj->paddr;
++	fbi->screen_base = obj->vaddr + offset;
++	fbi->fix.smem_start = (unsigned long)(obj->paddr + offset);
++	fbi->screen_size = size;
++	fbi->fix.smem_len = size;
++
++	return 0;
++
++err_drm_fb_cma_destroy:
++	tilcdc_fb_cma_destroy(fb);
++err_framebuffer_release:
++	framebuffer_release(fbi);
++err_drm_gem_cma_free_object:
++	drm_gem_cma_free_object(&obj->base);
++	return ret;
++}
++
++int tilcdc_drm_fbdev_probe(struct drm_fb_helper *helper,
++			   struct drm_fb_helper_surface_size *sizes)
++{
++	int ret = 0;
++
++	if (!helper->fb) {
++		ret = tilcdc_drm_fbdev_create(helper, sizes);
++		if (ret < 0) {
++			DRM_ERROR("failed to create fbdev.\n");
++			return ret;
++		}
++
++		ret = 1;
++	}
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(tilcdc_drm_fbdev_probe);
++
++struct tilcdc_drm_fbdev *tilcdc_fbdev_cma_init(struct drm_device *dev,
++	unsigned int preferred_bpp, unsigned int num_crtc,
++	unsigned int max_conn_count)
++{
++	struct tilcdc_drm_fbdev *fbdev_cma;
++	struct drm_fb_helper *helper;
++	int ret;
++
++	fbdev_cma = kzalloc(sizeof(*fbdev_cma), GFP_KERNEL);
++	if (!fbdev_cma) {
++		dev_err(dev->dev, "Failed to allocate drm fbdev.\n");
++		return ERR_PTR(-ENOMEM);
++	}
++
++	fbdev_cma->drm_fb_helper.funcs = &tilcdc_fb_cma_helper_funcs;
++	helper = &fbdev_cma->drm_fb_helper;
++
++	ret = drm_fb_helper_init(dev, helper, num_crtc, max_conn_count);
++	if (ret < 0) {
++		dev_err(dev->dev, "Failed to initialize drm fb helper.\n");
++		goto err_free;
++	}
++
++	ret = drm_fb_helper_single_add_all_connectors(helper);
++	if (ret < 0) {
++		dev_err(dev->dev, "Failed to add connectors.\n");
++		goto err_drm_fb_helper_fini;
++
++	}
++
++	ret = drm_fb_helper_initial_config(helper, preferred_bpp);
++	if (ret < 0) {
++		dev_err(dev->dev, "Failed to set inital hw configuration.\n");
++		goto err_drm_fb_helper_fini;
++	}
++
++	return fbdev_cma;
++
++err_drm_fb_helper_fini:
++	drm_fb_helper_fini(helper);
++err_free:
++	kfree(fbdev_cma);
++
++	return ERR_PTR(ret);
++}
++EXPORT_SYMBOL_GPL(tilcdc_fbdev_cma_init);
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_fbdev.h b/drivers/gpu/drm/tilcdc/tilcdc_fbdev.h
+new file mode 100644
+index 0000000..970299b
+--- /dev/null
++++ b/drivers/gpu/drm/tilcdc/tilcdc_fbdev.h
+@@ -0,0 +1,31 @@
++/*
++ * Copyright (C) 2014 B. Scott Michel
++ * Author: B. Scott Michel (bscottm@ieee.org)
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 as published by
++ * the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ *
++ * You should have received a copy of the GNU General Public License along with
++ * this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#ifndef __TILCDC_FBDEV_H__
++#define __TILCDC_FBDEV_H__
++
++struct tilcdc_fb_cma;
++struct tilcdc_drm_fbdev;
++
++int tilcdc_drm_fbdev_probe(struct drm_fb_helper *helper,
++			   struct drm_fb_helper_surface_size *sizes);
++
++struct tilcdc_drm_fbdev *tilcdc_fbdev_cma_init(struct drm_device *dev,
++	unsigned int preferred_bpp, unsigned int num_crtc,
++	unsigned int max_conn_count);
++
++#endif
+diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
+index 4e39291a..c0d3462 100644
+--- a/drivers/video/console/fbcon.c
++++ b/drivers/video/console/fbcon.c
+@@ -757,7 +757,17 @@ static int con2fb_release_oldinfo(struct vc_data *vc, struct fb_info *oldinfo,
+ 		  the fb_release() method of oldinfo may attempt to
+ 		  restore the hardware state.  This will leave the
+ 		  newinfo in an undefined state. Thus, a call to
+-		  fb_set_par() may be needed for the newinfo.
++		  fb_check_par() and fb_set_par() may be needed for the
++		  newinfo.
++ 		*/
++		if (newinfo->fbops->fb_check_var) {
++			ret = newinfo->fbops->fb_check_var(&newinfo->var, newinfo);
++			if (ret)
++				printk(KERN_ERR "con2fb_release_oldinfo: detected "
++				       "unhandled fb_check_var error, "
++				       "error code %d\n", ret);
++		}
++
+ 		*/
+ 		if (newinfo->fbops->fb_set_par) {
+ 			ret = newinfo->fbops->fb_set_par(newinfo);
+@@ -780,13 +790,25 @@ static void con2fb_init_display(struct vc_data *vc, struct fb_info *info,
+ 
+ 	ops->currcon = fg_console;
+ 
+-	if (info->fbops->fb_set_par && !(ops->flags & FBCON_FLAGS_INIT)) {
+-		ret = info->fbops->fb_set_par(info);
++	if (!(ops->flags & FBCON_FLAGS_INIT)) {
++		/* Ensure that fb_check_var and fb_set_var are called
++		   as a pair. */
++	        if (info->fbops->fb_check_var) {
++		        ret = info->fbops->fb_check_var(&info->var, info);
++			if (ret)
++			      printk(KERN_ERR "con2fb_init_display: detected "
++				      "unhandled fb_check_var error, "
++				      "error code %d\n", ret);
++		}
++
++		if (info->fbops->fb_set_par) {
++			ret = info->fbops->fb_set_par(info);
+ 
+-		if (ret)
+-			printk(KERN_ERR "con2fb_init_display: detected "
+-				"unhandled fb_set_par error, "
+-				"error code %d\n", ret);
++			if (ret)
++				printk(KERN_ERR "con2fb_init_display: detected "
++				       "unhandled fb_set_par error, "
++				       "error code %d\n", ret);
++		}		
+ 	}
+ 
+ 	ops->flags |= FBCON_FLAGS_INIT;
+@@ -1114,14 +1136,22 @@ static void fbcon_init(struct vc_data *vc, int init)
+ 	 * We need to do it in fbcon_init() to prevent screen corruption.
+ 	 */
+ 	if (CON_IS_VISIBLE(vc) && vc->vc_mode == KD_TEXT) {
+-		if (info->fbops->fb_set_par &&
+-		    !(ops->flags & FBCON_FLAGS_INIT)) {
+-			ret = info->fbops->fb_set_par(info);
++		if (!(ops->flags & FBCON_FLAGS_INIT)) {
++		  if (info->fbops->fb_check_var) {
++			        ret = info->fbops->fb_check_var(&info->var, info);
++				if (ret)
++				      printk(KERN_ERR "fbcon_init: detected "
++					      "unhandled fb_check_var error, "
++					      "error code %d\n", ret);
++			}
+ 
+-			if (ret)
+-				printk(KERN_ERR "fbcon_init: detected "
+-					"unhandled fb_set_par error, "
+-					"error code %d\n", ret);
++			if (info->fbops->fb_set_par) {
++				ret = info->fbops->fb_set_par(info);
++				if (ret)
++					printk(KERN_ERR "fbcon_init: detected "
++					       "unhandled fb_set_par error, "
++					       "error code %d\n", ret);
++			}
+ 		}
+ 
+ 		ops->flags |= FBCON_FLAGS_INIT;
+-- 
+1.9.1
+
+
+From 8c0dfe4a8c098b6dc5794b8c6294a98c7d915a34 Mon Sep 17 00:00:00 2001
+From: ruisebastiao <ruisebastiao@gmail.com>
+Date: Tue, 20 Jan 2015 01:28:45 +0000
+Subject: [PATCH 2/4] fix rgb swap revision 1.0
+
+---
+ drivers/gpu/drm/tilcdc/tilcdc_drv.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_drv.c b/drivers/gpu/drm/tilcdc/tilcdc_drv.c
+index 3161a17..380eaf6 100644
+--- a/drivers/gpu/drm/tilcdc/tilcdc_drv.c
++++ b/drivers/gpu/drm/tilcdc/tilcdc_drv.c
+@@ -170,8 +170,7 @@ static int tilcdc_load(struct drm_device *dev, unsigned long flags)
+ 	struct platform_device *pdev = dev->platformdev;
+ 	struct device_node *node = pdev->dev.of_node;
+ 	struct device_node *panel_info_node;	
+-	struct tilcdc_drm_private *priv;
+-	struct tilcdc_module *mod;
++	struct tilcdc_drm_private *priv;	
+ 	struct resource *res;
+ 	uint32_t preferred_bpp;
+ 	int ret;
+-- 
+1.9.1
+
+
+From 0b8bef64591118c9081c1786b92cea21bcfa0771 Mon Sep 17 00:00:00 2001
+From: ruisebastiao <ruisebastiao@gmail.com>
+Date: Tue, 20 Jan 2015 01:59:24 +0000
+Subject: [PATCH 3/4] fix rgb swap revision 1.1
+
+---
+ drivers/gpu/drm/tilcdc/tilcdc_drv.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_drv.c b/drivers/gpu/drm/tilcdc/tilcdc_drv.c
+index 380eaf6..8d241d3 100644
+--- a/drivers/gpu/drm/tilcdc/tilcdc_drv.c
++++ b/drivers/gpu/drm/tilcdc/tilcdc_drv.c
+@@ -128,7 +128,7 @@ static int tilcdc_unload(struct drm_device *dev)
+ 	struct tilcdc_drm_private *priv = dev->dev_private;
+ 	struct tilcdc_module *mod, *cur;
+ 
+-	drm_fbdev_cma_fini(priv->fbdev);
++	drm_fbdev_cma_fini((struct drm_fbdev_cma*)priv->fbdev);
+ 	drm_kms_helper_poll_fini(dev);
+ 	drm_mode_config_cleanup(dev);
+ 	drm_vblank_cleanup(dev);
+-- 
+1.9.1
+
+
+From b5f078fc7e3d603d1c99fd63e7077630a3925a32 Mon Sep 17 00:00:00 2001
+From: ruisebastiao <ruisebastiao@gmail.com>
+Date: Tue, 20 Jan 2015 02:55:53 +0000
+Subject: [PATCH 4/4] fix rgb swap revision 1.2
+
+---
+ drivers/video/console/fbcon.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
+index c0d3462..feca4f8 100644
+--- a/drivers/video/console/fbcon.c
++++ b/drivers/video/console/fbcon.c
+@@ -768,7 +768,7 @@ static int con2fb_release_oldinfo(struct vc_data *vc, struct fb_info *oldinfo,
+ 				       "error code %d\n", ret);
+ 		}
+ 
+-		*/
++		
+ 		if (newinfo->fbops->fb_set_par) {
+ 			ret = newinfo->fbops->fb_set_par(newinfo);
+ 
+-- 
+1.9.1
+
