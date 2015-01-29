@@ -1,26 +1,10 @@
-# Configuracao para utilizar a imagem zImage do kernel.
-
-kernel_file=zImage
-console=ttyO0,115200n8
-mmcroot=/dev/mmcblk0p2 rw
-mmcrootfstype=ext4 rootwait
+bootdelay=1
+serverip=192.168.131.206
+rootpath=/home/automacao/nfsroot/bbb
+bootfile=zImage
 
 
-serverip=192.168.47.131
+mmcbootargs=setenv mmcdev 1; setenv bootpart 1:2; setenv fdtfile am335x-boneblack-bb-view-43.dtb;
 
-machine_ip=dhcp
-
-rootpath=/home/automacao/rootfs/bbb,rsize=16384,wsize=16384
-
-loadtftp=tftpboot 0×80200000 /boot/uImage; tftpboot 0x815f0000 /boot/am335x-boneblack.dtb
-
-netargs=setenv bootargs console=${console} ${optargs} root=/dev/nfs nfsroot=${serverip}:${rootpath},vers=3 rw ip=${machine_ip}
-
-loadzimage=load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${kernel_file}
-loadfdt=load mmc ${mmcdev}:${mmcpart} ${fdtaddr} /dtbs/${fdtfile}
-
-mmcargs=setenv bootargs console=${console} root=${mmcroot} rootfstype=${mmcrootfstype} ${optargs}
-
-uenvcmd=run loadzimage; run loadfdt; run mmcargs; bootz ${loadaddr} - ${fdtaddr}
-
-bootnfs=setenv autoload no; run loadtftp; run netargs; bootz ${loadaddr} - ${fdtaddr}
+#uenvcmd=run netboot
+uenvcmd=run mmcbootargs;run loadimage;run mmcloados

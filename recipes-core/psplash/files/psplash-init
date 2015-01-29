@@ -19,7 +19,7 @@ done
 
 export TMPDIR=/mnt/.psplash
 
-export FBDEV=/dev/fb1
+export FBDEV=/dev/fb0
 
 mount tmpfs -t tmpfs $TMPDIR -o,size=40k
 

@@ -48,7 +48,8 @@ PR = "${MACHINE_KERNEL_PR}"
 
 do_patch_append(){
   cp  ${WORKDIR}/am335x-bone-ti-tscadc-4-wire.dtsi ${S}/arch/arm/boot/dts/
-  cp  ${WORKDIR}/am335x-bone-panel-480x272-bgrx_16bpp.dtsi ${S}/arch/arm/boot/dts/  
+  cp  ${WORKDIR}/am335x-bone-panel-480x272-bgrx_16bpp.dtsi ${S}/arch/arm/boot/dts/
+    
 }
 
 
@@ -59,7 +60,7 @@ KERNEL_GIT_URI = "git://${HOME}/beagleboard-linux/"
 SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \	   	    
 	    file://am335x-bone-ti-tscadc-4-wire.dtsi \
 	    file://am335x-bone-panel-480x272-bgrx_16bpp.dtsi \
+	    file://0003-add_pmic_interrupt.patch \
+	    file://0002-fix_bbview43.patch \
 	    file://defconfig \	    
           "
-
-#file://0001-fix_rgb_swap.patch 

@@ -11,6 +11,7 @@ include recipes-core/images/core-image-minimal.bb
 
 
 IMAGE_INSTALL += "\
+	        packagegroup-qt5-machine-related \
 		packagegroup-kpp-base \
 		packagegroup-qt5-full \
 		kernel-modules \

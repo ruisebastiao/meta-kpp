@@ -3,7 +3,6 @@ LICENSE = "CLOSED"
 
 inherit packagegroup
 
-
 PACKAGES = "\
          packagegroup-kpp-base \
     "
@@ -28,7 +27,7 @@ boost cmake zlib glib-2.0 git \
     gst-plugins-good-rtp \
     gst-plugins-good-video4linux2 \
     openssh-sftp-server \
-    cairo pango fontconfig freetype dbus \
+    freetype dbus \
     i2c-tools dtc coreutils \
     connman wireless-tools wpa-supplicant \
     tslib-conf tslib-tests tslib-calibrate tslib strace \
