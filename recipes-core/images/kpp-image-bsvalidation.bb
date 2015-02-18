@@ -2,7 +2,6 @@ SUMMARY = "Image for Bs Validation Systems"
 
 LICENSE = "GPL-3.0"
 
-DISTRO_FEATURES_remove = "x11 wayland"
 MACHINE_EXTRA_RRECOMMENDS = "kernel-modules eee-acpi-scripts"
 
 include kpp-image-qt5.bb

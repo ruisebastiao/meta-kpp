@@ -11,7 +11,7 @@ RDEPENDS_packagegroup-kpp-base = "\
  gcc g++ binutils libgcc libgcc-dev libstdc++ \
 libstdc++-dev libstdc++-staticdev libexif \
 autoconf automake ccache chkconfig glib-networking \
-packagegroup-core-buildessential \
+packagegroup-core-buildessential glibc \
 boost cmake zlib glib-2.0 git \
     gdb \
     gdbserver \
