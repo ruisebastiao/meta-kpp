@@ -6,12 +6,12 @@ set -e
 # Carry out specific functions when asked to by the system
 case "$1" in
   start)
-    if [ "$( pidof python /home/root/pykppbsvalidation.py)" ]
+    if [ "$( pidof python /usr/bin/pykppbsvalidation.py)" ]
     then
       echo "KPP Python BS Validation is running"
     else
       echo "Starting KPP Python BS Validation "  
-      python /home/root/pykppbsvalidation.py&
+      python /usr/bin/pykppbsvalidation.py&
     fi
 
 
@@ -19,9 +19,9 @@ case "$1" in
     ;;
   stop)
     echo "Stopping KPP Python BS Validation "
-    if [ "$( pidof python /home/root/pykppbsvalidation.py)" ]
+    if [ "$( pidof python /usr/bin/pykppbsvalidation.py)" ]
     then
-      pid=$( pidof python /home/root/pykppbsvalidation.py)
+      pid=$( pidof python /usr/bin/pykppbsvalidation.py)
       kill -s TERM $pid
     else
      :

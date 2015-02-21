@@ -33,7 +33,7 @@ INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
 datadir="/home/root"
 
-#FILES_${PN}-dbg += "${datadir}/${P}/.debug"
+
 FILES_${PN} += "${datadir}"
 
 do_install_append(){
