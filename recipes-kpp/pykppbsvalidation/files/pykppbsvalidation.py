@@ -255,11 +255,13 @@ def main():
                     if waitfor_port==False:
                       if ser==None:
                         ser = serial.Serial(serialport,9600,timeout=0)
+                        sleep(0.1)
+                        ser.write('\x45')
                         print "Connected to Barcode Reader at : "+ serialport
 		      if errorretry==0:
-			code = ser.readline()   # read a '\n' terminated line
-                      if code != "":
-			
+			code = ser.readline()   # read a '\n' terminated line			
+		      if code != "":
+			ser.write('\x44')
 			GPIO.output(RED_LED, GPIO.LOW)
 			GPIO.output(GREEN_LED, GPIO.LOW)
 			GPIO.output(YELLOW_LED, GPIO.LOW)
@@ -281,8 +283,9 @@ def main():
 			  blink_exit=True
 			  thread_blink.join()
 			
-			sleep(1.5)
-			ser.flushInput()
+			sleep(1)
+			ser.write('\x45')
+			#ser.flushInput()
 
                     #else:
 		    sleep(0.1)
