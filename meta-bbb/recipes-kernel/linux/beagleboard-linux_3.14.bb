@@ -39,8 +39,8 @@ S = "${WORKDIR}/git"
 BRANCH = "3.14"
 
 # Corresponds to tag  3.14.29-ti-r45
-SRCREV = "0f54ea54966e3ef5d4ca7ec47d36fc3ea29e1ad2"
-PV = "3.14.29"
+SRCREV = "ec27def220ece532c8c6dc5e21fd28be647cdded"
+PV = "3.14.33"
 
 # Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
 MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"

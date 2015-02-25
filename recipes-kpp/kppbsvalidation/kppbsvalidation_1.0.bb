@@ -13,9 +13,6 @@ SRCREV = "${AUTOREV}"
 
 BRANCH="master"
 
-#KERNEL_GIT_URI = "git:///home/rui/KPPBSValidation"
-#KERNEL_GIT_PROTOCOL="file"
-
 KERNEL_GIT_URI = "git://github.com/ruisebastiao/KPPBSValidation.git"
 KERNEL_GIT_PROTOCOL="git"
 

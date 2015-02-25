@@ -3,11 +3,14 @@ DESCRIPTION = ""
 
 LICENSE = "CLOSED"
 
-FILESEXTRAPATHS_append := "${THISDIR}/files:"
+COMPATIBLE_MACHINE = "cubieboard|raspberrypi"
 
-PR = "r02"
+FILESEXTRAPATHS_preppend := "${THISDIR}/files:"
 
-DEPENDS = "python python-pyserial python-dev python-netclient python-pyudev"
+PR = "r08"
+
+RDEPENDS_${PN} = "python-core python-pyserial python-netclient python-pyudev udev"
+RDEPENDS_${PN}-dev="python-dev udev-dev"
 
 SRC_URI = "file://pykppbsvalidation-init.sh \	
 	  file://pykppbsvalidation.py \
@@ -27,8 +30,9 @@ do_install_prepend(){
 }
 
 
-FILES_${PN} ="${bindir}/pykppbsvalidation.py \
+FILES_${PN} +="${bindir}/pykppbsvalidation.py \
 	      ${sysconfdir}/init.d/pykppbsvalidation-init.sh \
+	      /home/root/App.cfg \
 	      "
 
 inherit update-rc.d

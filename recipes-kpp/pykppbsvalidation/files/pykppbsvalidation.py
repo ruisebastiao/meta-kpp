@@ -11,7 +11,7 @@ import os.path
 import pyudev
 import subprocess
 from time import sleep
-import SUNXI_GPIO as GPIO
+import KPPGPIO
 import time
 from threading import Thread
 import collections
@@ -31,9 +31,7 @@ apppath=os.path.dirname(os.path.abspath(__file__))
 configFile='/home/root/App.cfg'
 
 def process_response(resp):
-  global RED_LED
-  global GREEN_LED
-  global YELLOW_LED
+  
   global last_readings
   
   #print "Teste:"+str(len(last_readings))
@@ -70,31 +68,8 @@ def process_response(resp):
     
     
   sleep(1)
-  GPIO.output(YELLOW_LED, GPIO.LOW)
+  KPPGPIO.STATUS_ON()
   
-def setup_leds():
-  global RED_LED
-  global GREEN_LED
-  global YELLOW_LED
-  
-  RED_LED = GPIO.PG5
-  GREEN_LED = GPIO.PG1
-  YELLOW_LED = GPIO.PG2  
-  
-  GPIO.init()
-  GPIO.setcfg(RED_LED, GPIO.OUT)
-  GPIO.setcfg(GREEN_LED, GPIO.OUT)
-  GPIO.setcfg(YELLOW_LED, GPIO.OUT)
-  
-  GPIO.output(RED_LED, GPIO.HIGH)
-  GPIO.output(GREEN_LED, GPIO.HIGH)
-  GPIO.output(YELLOW_LED, GPIO.HIGH)
-  time.sleep(1)
-  GPIO.output(RED_LED, GPIO.LOW)
-  GPIO.output(GREEN_LED, GPIO.LOW)
-  #GPIO.output(YELLOW_LED, GPIO.LOW)
-  
-
 
 def signal_handler(signal, frame):
         print('Exiting...')
@@ -102,12 +77,10 @@ def signal_handler(signal, frame):
         if ser!=None:
           ser.close()
         
-        global RED_LED
-	global GREEN_LED
-	global YELLOW_LED
-        GPIO.output(RED_LED, GPIO.LOW)
-	GPIO.output(GREEN_LED, GPIO.LOW)
-	GPIO.output(YELLOW_LED, GPIO.LOW)
+	KPPGPIO.STATUS_OFF()
+        KPPGPIO.OK_OFF()
+        KPPGPIO.NOK_OFF()
+        
 	global thread_blink
 	global blink_exit
 	blink_exit=False
@@ -196,28 +169,26 @@ def log_event(action, device):
 
 
 def blink_led(lednum,blink_speed,blink_num):
-  global RED_LED
-  global GREEN_LED
-  global YELLOW_LED
+  
   
   global blink_exit
   blink_exit=False
   blinkcount=0
   while blink_exit==False:
     if lednum==1:
-      GPIO.output(RED_LED, GPIO.LOW)
+      KPPGPIO.NOK_OFF()
       sleep(blink_speed)
-      GPIO.output(RED_LED, GPIO.HIGH)
+      KPPGPIO.NOK_ON()
       sleep(blink_speed)
     elif lednum==2:      
-      GPIO.output(GREEN_LED, GPIO.LOW)
+      KPPGPIO.OK_OFF()
       sleep(blink_speed)
-      GPIO.output(GREEN_LED, GPIO.HIGH)
+      KPPGPIO.NOK_OFF()
       sleep(blink_speed)
     elif lednum==3:
-      GPIO.output(YELLOW_LED, GPIO.LOW)
+      KPPGPIO.STATUS_OFF()
       sleep(blink_speed)
-      GPIO.output(YELLOW_LED, GPIO.HIGH)
+      KPPGPIO.STATUS_ON()
       sleep(blink_speed)
     if blink_num>0:
       blinkcount=blinkcount+1
@@ -230,10 +201,8 @@ def main():
 	global last_readings
 	last_readings = collections.deque([BSinfo("",""),BSinfo("",""),BSinfo("",""),BSinfo("",""),BSinfo("","")])
 	global blink_exit
-	global RED_LED
-	global GREEN_LED
-	global YELLOW_LED
-        setup_leds()
+	
+        KPPGPIO.setup_leds()
         global ser
         global waitfor_port
         waitfor_port=False
@@ -262,9 +231,9 @@ def main():
 			code = ser.readline()   # read a '\n' terminated line			
 		      if code != "":
 			ser.write('\x44')
-			GPIO.output(RED_LED, GPIO.LOW)
-			GPIO.output(GREEN_LED, GPIO.LOW)
-			GPIO.output(YELLOW_LED, GPIO.LOW)
+			KPPGPIO.NOK_OFF()
+			KPPGPIO.OK_OFF()
+			
 			thread_blink = Thread(target = blink_led, args = (3,0.5,0 ))
 			thread_blink.daemon = True
 			thread_blink.start()
