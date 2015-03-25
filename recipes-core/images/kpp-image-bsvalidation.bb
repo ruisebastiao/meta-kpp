@@ -9,5 +9,6 @@ include kpp-image-base.bb
 
 IMAGE_INSTALL += "\
 		  kppbsvalidation \
+		  opencv \
 		"
 

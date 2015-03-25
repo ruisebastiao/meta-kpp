@@ -5,7 +5,7 @@ LICENSE = "CLOSED"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-PR = "r09"
+PR = "r10"
 
 DEPENDS = "qtbase qtserialport qtwebsockets"
 
