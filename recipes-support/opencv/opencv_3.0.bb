@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://include/opencv2/opencv.hpp;endline=41;md5=6d690d8488a
 
 ARM_INSTRUCTION_SET = "arm"
 
-DEPENDS = "python-numpy libtool swig swig-native python bzip2 zlib glib-2.0 qtbase"
+DEPENDS = "python-numpy libtool swig swig-native python bzip2 zlib glib-2.0"
 
 SRCREV = "f6c561a01b172b77df47645ae3e5054e59c95c58"
 SRC_URI = "git://github.com/Itseez/opencv.git;branch=master"
@@ -26,7 +26,6 @@ EXTRA_OECMAKE = "-DPYTHON_NUMPY_INCLUDE_DIR:PATH=${STAGING_LIBDIR}/${PYTHON_DIR}
                  -DBUILD_PYTHON_SUPPORT=ON \
                  -DWITH_GSTREAMER=OFF \
                  -DWITH_1394=OFF \
-                 -DWITH_QT=ON \
                  -DCMAKE_SKIP_RPATH=ON \
                  ${@bb.utils.contains("TARGET_CC_ARCH", "-msse3", "-DENABLE_SSE=1 -DENABLE_SSE2=1 -DENABLE_SSE3=1 -DENABLE_SSSE3=1", "", d)} \
                  ${@base_conditional("libdir", "/usr/lib64", "-DLIB_SUFFIX=64", "", d)} \

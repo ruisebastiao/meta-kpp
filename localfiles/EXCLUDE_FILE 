@@ -1,0 +1,8 @@
+/dev/*
+/proc/*
+/sys/*
+/media/*
+/mnt/*
+/run/*
+/tmp/*
+/var/volatile/*

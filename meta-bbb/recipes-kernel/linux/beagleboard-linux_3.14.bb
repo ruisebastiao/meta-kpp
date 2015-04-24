@@ -38,9 +38,9 @@ S = "${WORKDIR}/git"
 
 BRANCH = "3.14"
 
-# Corresponds to tag  3.14.29-ti-r50				
-SRCREV = "44f10beec858359e70f8b406fe6bd85cfe3a95dd"
-PV = "3.14.50"
+# Corresponds to tag  3.14.29-ti-r55				
+SRCREV = "ee2a2099346924329953321c9c80e88841b0ddd3"
+PV = "3.14.55"
 
 # Append to the MACHINE_KERNEL_PR so that a new SRCREV will cause a rebuild
 MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
@@ -58,8 +58,9 @@ KERNEL_GIT_URI = "git://${HOME}/beagleboard-linux/"
 
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \	   	    
-	    file://defconfig \	    
-	    file://am335x-bone-ti-tscadc-4-wire.dtsi \
+	file://defconfig \	    
+	file://am335x-bone-ti-tscadc-4-wire.dtsi \
+	file://0000-Handle-ISOCH-differently-and-not-use-the-hrtimer.patch \
           "
 #    
 #	    file://am335x-bone-panel-480x272-bgrx_16bpp.dtsi
