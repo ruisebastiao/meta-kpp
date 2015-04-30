@@ -14,4 +14,4 @@ IMAGE_INSTALL += "\
 		"
 
 
-SPLASH = "psplash-kpp"
+#SPLASH = "psplash-kpp"
