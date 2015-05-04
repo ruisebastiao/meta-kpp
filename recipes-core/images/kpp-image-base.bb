@@ -2,7 +2,7 @@ SUMMARY = "KPP BASE IMAGE"
 
 LICENSE = "GPL-3.0"
 
-IMAGE_FEATURES += " ssh-server-openssh splash package-management "
+IMAGE_FEATURES += " ssh-server-openssh package-management "
 
 
 # Base this image on core-image-minimal
@@ -14,4 +14,4 @@ IMAGE_INSTALL += "\
 		"
 
 
-#SPLASH = "psplash-kpp"
+

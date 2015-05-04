@@ -1,5 +1,5 @@
 SECTION = "kernel"
-DESCRIPTION = "Linux kernel for cubieboard"
+DESCRIPTION = "Linux kernel"
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d7810fab7487fb0aad327b76f1be7cd7"
 
@@ -75,5 +75,6 @@ SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \
 	file://0003-fix-sgx-drm.patch \
 	file://0004-add-dts-files.patch \
 	file://0005-add-omap-sgx-header.patch \
+	file://0006-add_sgx_support_in_dts.patch \
           "
 

@@ -9,6 +9,9 @@ include kpp-image-qt5.bb
 
 MACHINE_EXTRA_RRECOMMENDS = "kernel-modules eee-acpi-scripts"
 
+#IMAGE_FEATURES += " splash "
+
+#SPLASH = "plymouth"
 
 PR = "r1"
 
