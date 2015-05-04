@@ -1,0 +1,10 @@
+bootdelay=1
+serverip=192.168.131.206
+rootpath=/home/automacao/nfsroot/bbb
+bootfile=zImage
+
+
+mmcbootargs=setenv mmcdev 1; setenv bootpart 1:2; setenv fdtfile am335x-boneblack-bb-view-43.dtb;
+
+#uenvcmd=run netboot
+uenvcmd=run mmcbootargs;run loadimage;run mmcloados
