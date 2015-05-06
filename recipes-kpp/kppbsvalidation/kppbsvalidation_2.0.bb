@@ -5,13 +5,14 @@ LICENSE = "CLOSED"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-PR = "r03"
+PR = "r06"
 
-DEPENDS = "qtbase qtserialport qtwebsockets kppbarcodereader libv4l"
+DEPENDS = " qtbase qtserialport qtwebsockets kppbarcodereader" 
+
 
 SRCREV = "${AUTOREV}"
 
-BRANCH="v2.0"
+BRANCH="master"
 
 KERNEL_GIT_URI = "git://github.com/ruisebastiao/KPPBSValidation.git"
 KERNEL_GIT_PROTOCOL="git"

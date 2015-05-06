@@ -9,22 +9,21 @@ include kpp-image-qt5.bb
 
 MACHINE_EXTRA_RRECOMMENDS = "kernel-modules eee-acpi-scripts"
 
-#IMAGE_FEATURES += " splash "
+IMAGE_FEATURES += " splash "
 
-#SPLASH = "plymouth"
+SPLASH = "psplash-kpp"
 
 PR = "r1"
 
 
 EXTRA_IMAGE_FEATURES += " tools-sdk "
 
+#packagegroup-qt5-machine-related
+
 IMAGE_INSTALL += "\
-		packagegroup-qt5-machine-related \
-		packagegroup-qt5-full \
+		packagegroup-qt5-base \
 	        linux-firmware-ralink \
 		linux-firmware-rtl8192cu \
-		gstreamer1.0-plugins-bad \
-		gstreamer1.0-plugins-good \
 		git \
 		gdb \
 		gdbserver \
@@ -44,14 +43,11 @@ IMAGE_INSTALL += "\
 		i2c-tools dtc coreutils \	       
 		connman wireless-tools wpa-supplicant \
 		tslib-conf tslib-tests tslib-calibrate tslib strace \
-		jpeg \
-		opencv \
-		opencv-dev \
-		qzxing \
+		jpeg libdrm \
+		qtserialport \    	
+	    	qtwebsockets \
+		kppbsvalidation \
 		connman-client rfkill usbutils \
 		"
 
-#kppbsvalidation 
-#opencv 
-#qzxing 
-#kppbarcodereader 
+

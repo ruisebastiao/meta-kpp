@@ -1,15 +1,14 @@
-SUMMARY = "KPP BS Validation"
+SUMMARY = "KPP BARCODE READER"
 DESCRIPTION = ""
 
 LICENSE = "CLOSED"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
-
-PR = "r05"
+PR = "r14"
 
 S = "${WORKDIR}/git"
 
-DEPENDS += "qtbase qtmultimedia qzxing opencv"
+DEPENDS = "qtbase qtwebsockets qtmultimedia qzxing kppqtcommonlib opencv libv4l"
+
 
 inherit qmake5 pkgconfig
 
@@ -22,4 +21,12 @@ KERNEL_GIT_PROTOCOL="git"
 
 SRC_URI = "${KERNEL_GIT_URI};protocol=${KERNEL_GIT_PROTOCOL};branch=${BRANCH} \
 "
+
+do_install_append() {
+	install -d ${D}${includedir}/
+	install -m 644 ${S}/*.h ${D}${includedir}/
+}
+
+
+#FILES_${PN} += "${includedir} ${libdir}/*.so*"
 

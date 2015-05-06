@@ -14,7 +14,7 @@ INHIBIT_PACKAGE_STRIP = "1"
 LINUX_KERNEL_TYPE = "beagleboard.org"
 LINUX_VERSION_EXTENSION = "-${LINUX_KERNEL_TYPE}"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/beagleboard-linux-3.19:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/beagleboard-linux-4.0:"
 
 # Pull in the devicetree files into the rootfs
 RDEPENDS_kernel-base += "kernel-devicetree"
@@ -48,12 +48,12 @@ MACHINE_KERNEL_PR_append = "d+gitr${SRCPV}"
 PR = "${MACHINE_KERNEL_PR}"
 
 
-do_kernel_configme_append(){
-  cp  ${WORKDIR}/am335x-pm-firmware.elf ${S}/firmware/
-  cp  ${WORKDIR}/am335x-pm-firmware.bin ${S}/firmware/
-  cp  ${WORKDIR}/am335x-bone-scale-data.bin ${S}/firmware/
-  cp  ${WORKDIR}/am335x-evm-scale-data.bin ${S}/firmware/
-  cp  ${WORKDIR}/am43x-evm-scale-data.bin ${S}/firmware/
+do_kernel_configme_prepend(){
+  cp  ${WORKDIR}/firmware/am335x-pm-firmware.elf ${S}/firmware/
+  cp  ${WORKDIR}/firmware/am335x-pm-firmware.bin ${S}/firmware/
+  cp  ${WORKDIR}/firmware/am335x-bone-scale-data.bin ${S}/firmware/
+  cp  ${WORKDIR}/firmware/am335x-evm-scale-data.bin ${S}/firmware/
+  cp  ${WORKDIR}/firmware/am43x-evm-scale-data.bin ${S}/firmware/
 	
  
 }
@@ -76,5 +76,7 @@ SRC_URI = "${KERNEL_GIT_URI};protocol=file;branch=${BRANCH} \
 	file://0004-add-dts-files.patch \
 	file://0005-add-omap-sgx-header.patch \
 	file://0006-add_sgx_support_in_dts.patch \
+	file://0007-ARM-OMAP2-Use-pdata-quirks-for-sgx-deassert_hardrese.patch \
           "
+
 
